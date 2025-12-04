@@ -46,7 +46,7 @@ ZavaStorefront/
         └── products/           # Product images directory
 ```
 
-## How to Run
+## How to Run Locally
 
 1. Navigate to the project directory:
    ```bash
@@ -62,6 +62,165 @@ ZavaStorefront/
    ```
    https://localhost:5001
    ```
+
+## Deploy to Azure
+
+This application is configured for deployment to Azure using the Azure Developer CLI (azd) with containerized deployment to Azure App Service.
+
+### Prerequisites
+
+- [Azure Developer CLI (azd)](https://learn.microsoft.com/azure/developer/azure-developer-cli/install-azd)
+- [Azure CLI](https://learn.microsoft.com/cli/azure/install-azure-cli)
+- An Azure subscription
+- **No Docker installation required** - azd handles container builds in Azure
+
+### Infrastructure Overview
+
+The deployment provisions the following Azure resources in **westus3**:
+
+- **Azure App Service** (Linux, B1 SKU) - Hosts the containerized application
+- **Azure Container Registry** (Basic SKU) - Stores Docker images
+- **Application Insights** - Monitoring and telemetry
+- **Log Analytics Workspace** - Centralized logging
+- **Azure AI Foundry Hub** - AI workloads (GPT-4, Phi models)
+- **Azure AI Services** - Cognitive services for AI integration
+- **Azure Key Vault** - Secrets management for AI services
+- **Storage Account** - AI assets storage
+- **User-Assigned Managed Identity** - Passwordless authentication via RBAC
+
+All resources use **managed identity with RBAC** - no passwords or connection strings stored.
+
+### Deployment Steps
+
+1. **Login to Azure**:
+   ```bash
+   azd auth login
+   az login
+   ```
+
+2. **Initialize and deploy** (first time):
+   ```bash
+   azd up
+   ```
+   
+   This single command will:
+   - Prompt for environment name (e.g., `dev`)
+   - Prompt for Azure subscription
+   - Provision all infrastructure using Bicep
+   - Build the Docker container image
+   - Push the image to Azure Container Registry
+   - Deploy the container to App Service
+   - Configure managed identity and RBAC roles
+
+3. **View your deployed application**:
+   ```bash
+   azd show
+   ```
+   
+   Or visit the URL displayed after deployment completes.
+
+### Subsequent Deployments
+
+After initial provisioning, you can deploy application updates without reprovisioning infrastructure:
+
+```bash
+azd deploy
+```
+
+### View Application Logs
+
+```bash
+azd monitor --logs
+```
+
+Or view logs in the Azure Portal via Application Insights.
+
+### Infrastructure Details
+
+The infrastructure is defined in Bicep modules located in the `infra/` directory:
+
+```
+infra/
+├── main.bicep                    # Main orchestration file
+├── main.parameters.json          # Parameters file
+└── core/
+    ├── host/
+    │   ├── appservice.bicep      # App Service configuration
+    │   ├── appserviceplan.bicep  # App Service Plan
+    │   └── container-registry.bicep  # Azure Container Registry
+    ├── security/
+    │   ├── managed-identity.bicep    # User-assigned identity
+    │   ├── keyvault.bicep           # Key Vault for AI
+    │   └── role-assignment.bicep    # RBAC role assignments
+    ├── monitor/
+    │   ├── applicationinsights.bicep # Application Insights
+    │   └── loganalytics.bicep       # Log Analytics Workspace
+    └── ai/
+        ├── ai-hub.bicep             # Azure AI Foundry Hub
+        ├── ai-services.bicep        # Azure AI Services
+        └── storage.bicep            # Storage for AI assets
+```
+
+### Security Features
+
+- ✅ **No admin passwords**: ACR uses managed identity with `AcrPull` role
+- ✅ **RBAC-based access**: All Azure resource access via role assignments
+- ✅ **HTTPS only**: App Service enforces HTTPS
+- ✅ **TLS 1.2 minimum**: Modern encryption standards
+- ✅ **Managed identities**: Passwordless authentication to Azure services
+
+### Cost Optimization
+
+This configuration uses Basic/Standard SKUs optimized for development environments:
+
+| Resource | SKU | Estimated Cost/Month (USD) |
+|----------|-----|---------------------------|
+| App Service Plan | B1 Basic Linux | ~$13 |
+| Container Registry | Basic | ~$5 |
+| Application Insights | Pay-as-you-go | ~$2-5 |
+| Log Analytics | 5GB free tier | ~$0-2 |
+| AI Foundry Hub | S0 Standard | ~$10-50 |
+| Storage Account | Standard LRS | ~$1-2 |
+| Key Vault | Standard | ~$0.03 |
+| **Total** | | **~$31-87/month** |
+
+### Environment Variables
+
+The following environment variables are automatically configured by the deployment:
+
+- `APPLICATIONINSIGHTS_CONNECTION_STRING` - Application Insights connection
+- `ASPNETCORE_ENVIRONMENT` - Set to `Development`
+- `AZURE_OPENAI_ENDPOINT` - AI Services endpoint
+- `AI_HUB_WORKSPACE_ID` - Azure AI Foundry workspace ID
+- `WEBSITES_PORT` - Container port (80)
+- `DOCKER_REGISTRY_SERVER_URL` - ACR login server
+
+### Clean Up Resources
+
+To delete all Azure resources:
+
+```bash
+azd down
+```
+
+This will remove the resource group and all contained resources.
+
+### Troubleshooting
+
+**Issue**: Deployment fails with authentication error  
+**Solution**: Run `azd auth login` and `az login` to refresh credentials
+
+**Issue**: Container fails to start  
+**Solution**: Check logs with `azd monitor --logs` or view in Azure Portal
+
+**Issue**: App Service can't pull from ACR  
+**Solution**: Verify managed identity has `AcrPull` role (automatically configured)
+
+### Additional Resources
+
+- [Azure Developer CLI Documentation](https://learn.microsoft.com/azure/developer/azure-developer-cli/)
+- [Azure App Service Documentation](https://learn.microsoft.com/azure/app-service/)
+- [Azure AI Foundry Documentation](https://learn.microsoft.com/azure/ai-studio/)
 
 ## Product Images
 
