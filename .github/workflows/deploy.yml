@@ -26,9 +26,8 @@ jobs:
         password: ${{ secrets.ACR_PASSWORD }}
 
     - name: Build and push Docker image
-      working-directory: ./src
       run: |
-        docker build -t ${{ env.CONTAINER_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }} .
+        docker build -f src/Dockerfile -t ${{ env.CONTAINER_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }} src
         docker tag ${{ env.CONTAINER_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }} ${{ env.CONTAINER_REGISTRY }}/${{ env.IMAGE_NAME }}:latest
         docker push ${{ env.CONTAINER_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
         docker push ${{ env.CONTAINER_REGISTRY }}/${{ env.IMAGE_NAME }}:latest
