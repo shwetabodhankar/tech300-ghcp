@@ -23,7 +23,7 @@ param applicationInsightsId string
 param friendlyName string = hubName
 
 @description('Description of the hub')
-param description string = 'Azure AI Foundry Hub for ZavaStorefront'
+param hubDescription string = 'Azure AI Foundry Hub for ZavaStorefront'
 
 resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-04-01' = {
   name: hubName
@@ -35,7 +35,7 @@ resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-04-01' = {
   }
   properties: {
     friendlyName: friendlyName
-    description: description
+    description: hubDescription
     storageAccount: storageAccountId
     keyVault: keyVaultId
     applicationInsights: applicationInsightsId
@@ -48,7 +48,7 @@ resource aiHub 'Microsoft.MachineLearningServices/workspaces@2024-04-01' = {
     name: '${hubName}-aiservices'
     properties: {
       category: 'AIServices'
-      target: reference(aiServicesId, '2023-05-01').endpoint
+      target: 'https://cognitiveservices.azure.com/'
       authType: 'AAD'
       isSharedToAll: true
       metadata: {

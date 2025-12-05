@@ -100,7 +100,7 @@ module keyVault 'core/security/keyvault.bicep' = {
   name: 'keyvault-deployment'
   scope: rg
   params: {
-    keyVaultName: 'kv-${projectName}-${resourceToken}'
+    keyVaultName: 'kvzava${resourceToken}'
     location: location
     tags: tags
     enableRbacAuthorization: true
@@ -126,7 +126,7 @@ module aiHub 'core/ai/ai-hub.bicep' = {
   name: 'aihub-deployment'
   scope: rg
   params: {
-    hubName: 'aih-${projectName}-${environmentName}-${resourceToken}'
+    hubName: 'aih${resourceToken}'
     location: location
     tags: tags
     aiServicesId: aiServices.outputs.id
@@ -134,7 +134,7 @@ module aiHub 'core/ai/ai-hub.bicep' = {
     keyVaultId: keyVault.outputs.id
     applicationInsightsId: applicationInsights.outputs.id
     friendlyName: 'ZavaStorefront AI Hub (${environmentName})'
-    description: 'Azure AI Foundry Hub for ZavaStorefront - supports GPT-4 and Phi models'
+    hubDescription: 'Azure AI Foundry Hub for ZavaStorefront - supports GPT-4 and Phi models'
   }
 }
 
@@ -164,7 +164,7 @@ module appService 'core/host/appservice.bicep' = {
   params: {
     appName: 'app-${projectName}-${environmentName}-${resourceToken}'
     location: location
-    tags: tags
+    tags: union(tags, { 'azd-service-name': 'src' })
     appServicePlanId: appServicePlan.outputs.id
     managedIdentityId: managedIdentity.outputs.identityId
     containerRegistryUrl: containerRegistry.outputs.loginServer
